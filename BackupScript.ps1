@@ -2,8 +2,8 @@
 # Name: BackupScript.ps1                              
 # Creator: Michael Seidl aka Techguy    
 # Modifier: David J. Veer                
-# CreationDate: 21.01.2014                              
-# LastModified: 15.04.2018                                 
+# CreationDate: 21 Jan 2014                              
+# LastModified: 2 Jan 2018                                 
 # Doc: http://www.techguy.at/tag/backupscript/
 # PSVersion tested: 3 and 4
 #
@@ -17,17 +17,29 @@
 ########################################################
 
 #Variables, only Change here
-$Destination="F:\_Backup" #Copy the Files to this Location
-$Versions="50" #How many of the last Backups you want to keep
-$BackupDirs="C:\Users\Michael\AppData\Roaming\TaskUnifier","C:\Users\Michael", "C:\Program Files (x86)\OpenVPN" #What Folders you want to backup
-$Log="Log.txt" #Log Name
-$LoggingLevel="1" #LoggingLevel only for Output in Powershell Window, 1=smart, 3=Heavy
+$Destination="C:\Temp" #Copy the Files to this Location
+$Versions="2" #How many of the last Backups you want to keep
+$BackupDirs="C:\Users\Micha\OneDrive", "C:\Program Files (x86)\OpenVPN" #What Folders you want to backup
+$ExcludeDirs="C:\Program Files (x86)\OpenVPN\bin", "C:\Program Files (x86)\OpenVPN\config" #This list of Directories will not be copied
+$LogName="Log.txt" #Log Name
+$LoggingLevel="3" #LoggingLevel only for Output in Powershell Window, 1=smart, 3=Heavy
+$Zip=$true #Zip the Backup Destination
+$RemoveBackupDestination=$false #Remove copied files after Zip, only if $Zip is true
+
+
+#Send Mail Settings
+$SendEmail = $false                    # = $true if you want to enable send report to e-mail (SMTP send)
+$EmailTo   = 'test@domain.com'              #user@domain.something (for multiple users use "User01 &lt;user01@example.com&gt;" ,"User02 &lt;user02@example.com&gt;" )
+$EmailFrom = 'from@domain.com'   #matthew@domain 
+$EmailSMTP = 'smtp.domain.com' #smtp server adress, DNS hostname.
+
 
 
 #STOP-no changes from here
 #STOP-no changes from here
 #Settings - do not change anything from here
 $Backupdir=$Destination +"\Backup-"+ (Get-Date -format yyyy-MM-dd)+"-"+(Get-Random -Maximum 100000)+"\"
+$Log=$Backupdir+$LogName
 $Items=0
 $Count=0
 $ErrorCount=0
@@ -44,32 +56,37 @@ Function Logging ($State, $Message) {
     $Text="$Datum - $State"+":"+" $Message"
 
     if ($LoggingLevel -eq "1" -and $Message -notmatch "was copied") {Write-Host $Text}
-    elseif ($LoggingLevel -eq "3" -and $Message -match "was copied") {Write-Host $Text}
+    elseif ($LoggingLevel -eq "3") {Write-Host $Text}
    
     add-Content -Path $Log -Value $Text
+    sleep -Milliseconds 100
 }
-Logging "INFO" "----------------------"
-Logging "INFO" "Start the Script"
+
 
 #Create Backupdir
 Function Create-Backupdir {
-    Logging "INFO" "Create Backupdir $Backupdir"
     New-Item -Path $Backupdir -ItemType Directory | Out-Null
-
-    Logging "INFO" "Move Log file to $Backupdir"
-    Move-Item -Path $Log -Destination $Backupdir
-
-    Set-Location $Backupdir
-    Logging "INFO" "Continue with Log File at $Backupdir"
+    sleep -Seconds 3
+    Logging "INFO" "Create Backupdir $Backupdir"
 }
 
 #Delete Backupdir
 Function Delete-Backupdir {
-    $Folder=Get-ChildItem $Destination | Where-Object {$_.Attributes -eq "Directory"} | Sort-Object -Property $_.LastWriteTime -Descending:$false | Select-Object -First 1
+    $Folder=Get-ChildItem $Destination | where {$_.Attributes -eq "Directory"} | Sort-Object -Property $_.CreationTime  -Descending:$true | Select-Object -First 1
 
     Logging "INFO" "Remove Dir: $Folder"
     
     $Folder.FullName | Remove-Item -Recurse -Force 
+}
+
+
+#Delete Zip
+Function Delete-Zip {
+    $Zip=Get-ChildItem $Destination | where {$_.Attributes -eq "Archive" -and $_.Extension -eq ".zip"} | Sort-Object -Property $_.CreationTime  -Descending:$true | Select-Object -First 1
+
+    Logging "INFO" "Remove Zip: $Zip"
+    
+    $Zip.FullName | Remove-Item -Recurse -Force 
 }
 
 #Check if Backupdirs and Destination is available
@@ -110,7 +127,7 @@ Function Make-Backup {
     foreach ($Backup in $BackupDirs) {
         $Index=$Backup.LastIndexOf("\")
         $SplitBackup=$Backup.substring(0,$Index)
-        $Files = Get-ChildItem $Backup -Recurse | Where-Object {$_.mode -notmatch "h"} 
+        $Files = Get-ChildItem $Backup -Recurse | Where-Object {$_.mode -notmatch "h" -and $ExcludeDirs -notcontains $_.FullName} 
         foreach ($File in $Files) {
             $restpath = $file.fullname.replace($SplitBackup,"")
             try {
@@ -134,21 +151,42 @@ Function Make-Backup {
     Logging "INFO" "----------------------"
     Logging "INFO" "Copied $SumCount files with $SumTotalMB"
     Logging "INFO" "$ErrorCount Files could not be copied"
- }
+
+
+    # Send e-mail with reports as attachments
+    if ($SendEmail -eq $true) {
+        $EmailSubject = "Backup Email $(get-date -format MM.yyyy)"
+        $EmailBody = "Backup Script $(get-date -format MM.yyyy) (last Month).`nYours sincerely `Matthew - SYSTEM ADMINISTRATOR"
+        Logging "INFO" "Sending e-mail to $EmailTo from $EmailFrom (SMTPServer = $EmailSMTP) "
+        ### the attachment is $log 
+        Send-MailMessage -To $EmailTo -From $EmailFrom -Subject $EmailSubject -Body $EmailBody -SmtpServer $EmailSMTP -attachment $Log 
+    }
+}
+
+
+#Bcreate Backup Dir
+Create-Backupdir
+Logging "INFO" "----------------------"
+Logging "INFO" "Start the Script"
 
 #Check if Backupdir needs to be cleaned and create Backupdir
-$Count=(Get-ChildItem $Destination | Where-Object {$_.Attributes -eq "Directory"}).count
+$Count=(Get-ChildItem $Destination | where {$_.Attributes -eq "Directory"}).count
 Logging "INFO" "Check if there are more than $Versions Directories in the Backupdir"
 
-if ($count -lt $Versions) {
+if ($count -gt $Versions) {
 
-    Create-Backupdir
-
-} else {
-    
     Delete-Backupdir
 
-    Create-Backupdir
+}
+
+
+$CountZip=(Get-ChildItem $Destination | where {$_.Attributes -eq "Archive" -and $_.Extension -eq ".zip"}).count
+Logging "INFO" "Check if there are more than $Versions Zip in the Backupdir"
+
+if ($CountZip -gt $Versions) {
+
+    Delete-Zip 
+
 }
 
 #Check if all Dir are existing and do the Backup
@@ -163,11 +201,30 @@ if ($CheckDir -eq $false) {
     $span = $EndDate - $StartDate
     $Minutes=$span.Minutes
     $Seconds=$Span.Seconds
-    
+
     Logging "INFO" "Backupduration $Minutes Minutes and $Seconds Seconds"
     Logging "INFO" "----------------------"
     Logging "INFO" "----------------------" 
+
+    if ($Zip)
+    {
+        Logging "INFO" "Compress thew Backup Destination"
+        Compress-Archive -Path $Backupdir -DestinationPath ($Destination+("\"+$Backupdir.Replace($Destination,'').Replace('\','')+".zip")) -CompressionLevel Optimal -Force
+
+        If ($RemoveBackupDestination)
+        {
+            Logging "INFO" "Backupduration $Minutes Minutes and $Seconds Seconds"
+
+            #Remove-Item -Path $BackupDir -Force -Recurse 
+            get-childitem -Path $BackupDir -recurse -Force  | remove-item -Confirm:$false -Recurse
+            get-item -Path $BackupDir   | remove-item -Confirm:$false -Recurse
+        }
+    }
 }
 
-#Write-Host "Press any key to close ..."
-#$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+Write-Host "Press any key to close ..."
+
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+
+
+
