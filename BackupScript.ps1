@@ -5,7 +5,7 @@
 # CreationDate: 21 Jan 2014                              
 # LastModified: 2 Jan 2018                                 
 # Doc: http://www.techguy.at/tag/backupscript/
-# PSVersion tested: 3 and 4
+# PSVersion tested: 3, 4, 5.1
 #
 # Description: Copies the Bakupdirs to the Destination
 # You can configure more than one Backupdirs, every Dir
@@ -202,13 +202,13 @@ if ($CheckDir -eq $false) {
     $Minutes=$span.Minutes
     $Seconds=$Span.Seconds
 
-    Logging "INFO" "Backupduration $Minutes Minutes and $Seconds Seconds"
+    Logging "INFO" "Backup duration $Minutes Minutes and $Seconds Seconds"
     Logging "INFO" "----------------------"
     Logging "INFO" "----------------------" 
 
     if ($Zip)
     {
-        Logging "INFO" "Compress thew Backup Destination"
+        Logging "INFO" "Compress the Backup Destination"
         Compress-Archive -Path $Backupdir -DestinationPath ($Destination+("\"+$Backupdir.Replace($Destination,'').Replace('\','')+".zip")) -CompressionLevel Optimal -Force
 
         If ($RemoveBackupDestination)
