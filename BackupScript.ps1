@@ -164,7 +164,7 @@ Function Make-Backup {
 }
 
 
-#Bcreate Backup Dir
+#Create Backup Dir
 Create-Backupdir
 Logging "INFO" "----------------------"
 Logging "INFO" "Start the Script"
@@ -221,10 +221,4 @@ if ($CheckDir -eq $false) {
         }
     }
 }
-
-Write-Host "Press any key to close ..."
-
-$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-
-
 
