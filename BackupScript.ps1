@@ -17,10 +17,11 @@
 ########################################################
 
 #Variables, only Change here
-$Destination="C:\Temp" #Copy the Files to this Location
-$Versions="2" #How many of the last Backups you want to keep
-$BackupDirs="C:\Users\Micha\OneDrive", "C:\Program Files (x86)\OpenVPN" #What Folders you want to backup
-$ExcludeDirs="C:\Program Files (x86)\OpenVPN\bin", "C:\Program Files (x86)\OpenVPN\config" #This list of Directories will not be copied
+$Destination="C:\Users\Donna" #Copy the Files to this Location
+$TempDir="C:\TEMP"
+$Versions="8" #How many of the last Backups you want to keep
+$BackupDirs="C:\Users\Donna\", "C:\Program Files (x86)\OpenVPN" #What Folders you want to backup
+$ExcludeDirs="C:\Users\Donna\OneDrive", "C:\Program Files (x86)\OpenVPN\config" #This list of Directories will not be copied
 $LogName="Log.txt" #Log Name
 $LoggingLevel="3" #LoggingLevel only for Output in Powershell Window, 1=smart, 3=Heavy
 $Zip=$true #Zip the Backup Destination
