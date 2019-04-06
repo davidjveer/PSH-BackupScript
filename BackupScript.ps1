@@ -5,9 +5,9 @@
 # CreationDate: 21 Jan 2014                              
 # LastModified: 2 Jan 2018                                 
 # Doc: http://www.techguy.at/tag/backupscript/
-# PSVersion tested: 3, 4, 5.1
+# PSVersion tested: Windows PowerShell versions 3, 4, 5.1
 #
-# Description: Copies the Bakupdirs to the Destination
+# Description: Copies the Backupdirs to the Destination
 # You can configure more than one Backupdirs, every Dir
 # wil be copied to the Destination. A Progress Bar
 # is showing the Status of copied MB to the total MB
@@ -73,7 +73,7 @@ Function Create-Backupdir {
 
 #Delete Backupdir
 Function Delete-Backupdir {
-    $Folder=Get-ChildItem $Destination | where {$_.Attributes -eq "Directory"} | Sort-Object -Property $_.CreationTime  -Descending:$true | Select-Object -First 1
+    $Folder=Get-ChildItem $Destination | Where-Object {$_.Attributes -eq "Directory"} | Sort-Object -Property $_.CreationTime  -Descending:$true | Select-Object -First 1
 
     Logging "INFO" "Remove Dir: $Folder"
     
@@ -83,7 +83,7 @@ Function Delete-Backupdir {
 
 #Delete Zip
 Function Delete-Zip {
-    $Zip=Get-ChildItem $Destination | where {$_.Attributes -eq "Archive" -and $_.Extension -eq ".zip"} | Sort-Object -Property $_.CreationTime  -Descending:$true | Select-Object -First 1
+    $Zip=Get-ChildItem $Destination | Where-Object {$_.Attributes -eq "Archive" -and $_.Extension -eq ".zip"} | Sort-Object -Property $_.CreationTime  -Descending:$true | Select-Object -First 1
 
     Logging "INFO" "Remove Zip: $Zip"
     
@@ -171,7 +171,7 @@ Logging "INFO" "----------------------"
 Logging "INFO" "Start the Script"
 
 #Check if Backupdir needs to be cleaned and create Backupdir
-$Count=(Get-ChildItem $Destination | where {$_.Attributes -eq "Directory"}).count
+$Count=(Get-ChildItem $Destination | Where-Object {$_.Attributes -eq "Directory"}).count
 Logging "INFO" "Check if there are more than $Versions Directories in the Backupdir"
 
 if ($count -gt $Versions) {
@@ -181,7 +181,7 @@ if ($count -gt $Versions) {
 }
 
 
-$CountZip=(Get-ChildItem $Destination | where {$_.Attributes -eq "Archive" -and $_.Extension -eq ".zip"}).count
+$CountZip=(Get-ChildItem $Destination | Where-Object {$_.Attributes -eq "Archive" -and $_.Extension -eq ".zip"}).count
 Logging "INFO" "Check if there are more than $Versions Zip in the Backupdir"
 
 if ($CountZip -gt $Versions) {
