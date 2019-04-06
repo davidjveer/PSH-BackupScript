@@ -65,14 +65,14 @@ Function Logging ($State, $Message) {
 
 
 #Create Backupdir
-Function Create-Backupdir {
+Function New-Backupdir {
     New-Item -Path $Backupdir -ItemType Directory | Out-Null
     sleep -Seconds 3
     Logging "INFO" "Create Backupdir $Backupdir"
 }
 
 #Delete Backupdir
-Function Delete-Backupdir {
+Function Remove-Backupdir {
     $Folder=Get-ChildItem $Destination | Where-Object {$_.Attributes -eq "Directory"} | Sort-Object -Property $_.CreationTime  -Descending:$true | Select-Object -First 1
 
     Logging "INFO" "Remove Dir: $Folder"
@@ -82,7 +82,7 @@ Function Delete-Backupdir {
 
 
 #Delete Zip
-Function Delete-Zip {
+Function Remove-Zip {
     $Zip=Get-ChildItem $Destination | Where-Object {$_.Attributes -eq "Archive" -and $_.Extension -eq ".zip"} | Sort-Object -Property $_.CreationTime  -Descending:$true | Select-Object -First 1
 
     Logging "INFO" "Remove Zip: $Zip"
@@ -91,7 +91,7 @@ Function Delete-Zip {
 }
 
 #Check if Backupdirs and Destination is available
-function Check-Dir {
+function Test-Dir {
     Logging "INFO" "Check if BackupDir and Destination exists"
     if (!(Test-Path $BackupDirs)) {
         return $false
@@ -104,7 +104,7 @@ function Check-Dir {
 }
 
 #Save all the Files
-Function Make-Backup {
+Function Start-Backup {
     Logging "INFO" "Started the Backup"
     $Files=@()
     $SumMB=0
@@ -166,7 +166,7 @@ Function Make-Backup {
 
 
 #Create Backup Dir
-Create-Backupdir
+New-Backupdir
 Logging "INFO" "----------------------"
 Logging "INFO" "Start the Script"
 
@@ -176,7 +176,7 @@ Logging "INFO" "Check if there are more than $Versions Directories in the Backup
 
 if ($count -gt $Versions) {
 
-    Delete-Backupdir
+    Remove-Backupdir
 
 }
 
@@ -186,17 +186,17 @@ Logging "INFO" "Check if there are more than $Versions Zip in the Backupdir"
 
 if ($CountZip -gt $Versions) {
 
-    Delete-Zip 
+    Remove-Zip 
 
 }
 
 #Check if all Dir are existing and do the Backup
-$CheckDir=Check-Dir
+$CheckDir=Test-Dir
 
 if ($CheckDir -eq $false) {
     Logging "ERROR" "One of the Directory are not available, Script has stopped"
 } else {
-    Make-Backup
+    Start-Backup
 
     $Enddate=Get-Date #-format dd.MM.yyyy-HH:mm:ss
     $span = $EndDate - $StartDate
