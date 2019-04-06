@@ -14,3 +14,13 @@ NOTE:  Email report via SMTP is disabled by **$SendEmail** so you'll have to cha
 that to *$true* if you'd like to enable that functionality and also set the TO, FROM
 and SMTP server settings.
 
+NOTE:  You may have to change the PowerShell ExecutionPolicy on your local system in order to run local scripts, see below:
+
+```
+PS C:\PSH-BackupScript> Get-ExecutionPolicy
+Restricted
+PS C:\PSH-BackupScript>
+PS C:\PSH-BackupScript> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
+```
+
+If *RemoteSigned* doesn't work for your system you can `Get-Help Set-ExecutionPolicy` to find the correct policy for your use cases.
